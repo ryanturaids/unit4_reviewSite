@@ -63,6 +63,7 @@ const seedProducts = (quantity) => {
 
 const init = async () => {
   await client.connect();
+  const app = createServer();
   console.log("database connection established");
   createTables();
   console.log("tables created");
