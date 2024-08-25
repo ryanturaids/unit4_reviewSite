@@ -5,7 +5,9 @@ const {
   fetchUsers,
   createProduct,
   fetchProducts,
-} = require("./db");
+  seedUsers,
+  seedProducts,
+} = require("./db/models");
 const { faker } = require("@faker-js/faker");
 const express = require("express");
 const app = express();
@@ -28,42 +30,8 @@ app.get("/api/products", async (req, res, next) => {
   }
 });
 
-const seedUsers = (quantity) => {
-  for (let i = 0; i < quantity; i++) {
-    const firstName = faker.person.firstName();
-    const lastName = faker.person.lastName();
-    const username = faker.internet.userName({
-      firstName: firstName,
-      lastName: lastName,
-    });
-    const email = faker.internet.exampleEmail({
-      firstName: firstName,
-      lastName: lastName,
-    });
-    const password = faker.internet.password();
-    createUser({
-      firstName: firstName,
-      lastName: lastName,
-      username: username,
-      email: email,
-      password: password,
-    });
-  }
-};
-const seedProducts = (quantity) => {
-  for (let i = 0; i < quantity; i++) {
-    const productName = faker.commerce.productName();
-    const productDescription = faker.commerce.productDescription();
-    createProduct({
-      name: productName,
-      details: productDescription,
-    });
-  }
-};
-
 const init = async () => {
   await client.connect();
-  const app = createServer();
   console.log("database connection established");
   createTables();
   console.log("tables created");

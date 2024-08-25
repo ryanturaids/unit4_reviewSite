@@ -1,11 +1,7 @@
-const pg = require("pg");
-const client = new pg.Client(
-  process.env.DATABASE_URL || "postgres://localhost/acme_review_db"
-);
-
+const { client } = require("./client");
+const { faker } = require("@faker-js/faker");
 const uuid = require("uuid");
 const bcrypt = require("bcrypt");
-
 const jwt = require("jsonwebtoken");
 const JWT = process.env.JWT || "shhhhhhhhh";
 
@@ -101,6 +97,39 @@ const fetchProducts = async () => {
   return response.rows;
 };
 
+const seedUsers = (quantity) => {
+  for (let i = 0; i < quantity; i++) {
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
+    const username = faker.internet.userName({
+      firstName: firstName,
+      lastName: lastName,
+    });
+    const email = faker.internet.exampleEmail({
+      firstName: firstName,
+      lastName: lastName,
+    });
+    const password = faker.internet.password();
+    createUser({
+      firstName: firstName,
+      lastName: lastName,
+      username: username,
+      email: email,
+      password: password,
+    });
+  }
+};
+const seedProducts = (quantity) => {
+  for (let i = 0; i < quantity; i++) {
+    const productName = faker.commerce.productName();
+    const productDescription = faker.commerce.productDescription();
+    createProduct({
+      name: productName,
+      details: productDescription,
+    });
+  }
+};
+
 module.exports = {
   client,
   createTables,
@@ -108,4 +137,6 @@ module.exports = {
   fetchUsers,
   createProduct,
   fetchProducts,
+  seedUsers,
+  seedProducts,
 };
