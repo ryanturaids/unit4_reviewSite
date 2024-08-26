@@ -4,6 +4,7 @@ const {
   createTables,
   createUser,
   createProduct,
+  createReview,
 } = require("./db/models");
 const express = require("express");
 const routes = require("./routes");
@@ -177,7 +178,17 @@ describe("API Endpoints", () => {
   });
 
   // REVIEWS
+  describe("GET /api/products/:product_id/reviews", () => {});
+  describe("GET /api/users/:user_id/reviews", () => {});
+  describe("POST /api/products/:product_id/reviews", () => {});
+  describe("PUT /api/users/:user_id/reviews/:review_id", () => {});
+  describe("DELETE /api/users/:user_id/reviews/:review_id", () => {});
   // COMMENTS
+  describe("GET /api", () => {});
+  describe("GET /api", () => {});
+  describe("POST /api", () => {});
+  describe("PUT /api", () => {});
+  describe("DELETE /api", () => {});
   // AUTHENTICATION
   describe("POST /api/auth/login", () => {
     let resGoodInfo, resBadInfo, resBadUsername, resBadPassword;

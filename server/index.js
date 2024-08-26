@@ -1,12 +1,4 @@
-const {
-  client,
-  createTables,
-  seedUsers,
-  seedProducts,
-  createUser,
-  fetchUsers,
-  seedDatabase,
-} = require("./db/models");
+const { client, createTables, seedDatabase } = require("./db/models");
 const express = require("express");
 const app = express();
 const routes = require("./routes");
@@ -21,15 +13,7 @@ const init = async () => {
   createTables();
   console.log("tables created");
   seedDatabase();
-  // seedUsers(50);
-  // createUser({
-  //   username: "Thomas",
-  //   password: "iloveplanes",
-  //   email: "baristadude@gmail.com",
-  // });
-  // console.log("users seeded");
-  // seedProducts(100);
-  // console.log("products seeded");
+  console.log("database seeded");
   app.listen(port, () => {
     console.log("server running");
   });

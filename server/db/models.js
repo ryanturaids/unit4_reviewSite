@@ -119,64 +119,107 @@ const fetchReviewsByUser = async ({ user_id }) => {
   return response.rows;
 };
 const createReview = async ({ user_id, product_id, rating, details }) => {
-  const SQL = `
-    INSERT INTO reviews(id, user_id, product_id, rating, details)
-    VALUES($1, $2, $3, $4, $5)
-    RETURNING *;
+  try {
+    await client.query("BEGIN");
+    const SQL = `
+      INSERT INTO reviews(id, user_id, product_id, rating, details)
+      VALUES($1, $2, $3, $4, $5)
+      RETURNING *;
+    `;
+    const response = await client.query(SQL, [
+      uuid.v4(),
+      user_id,
+      product_id,
+      rating,
+      details,
+    ]);
+    const newReview = response.rows[0];
+
+    const SQL_AVG = `
+    SELECT AVG(rating) AS average_rating
+    FROM reviews
+    WHERE product_id = $1;
   `;
-  const response = await client.query(SQL, [
-    uuid.v4(),
-    user_id,
-    product_id,
-    rating,
-    details,
-  ]);
-  return response.rows[0];
+    const avgResponse = await client.query(SQL_AVG, [product_id]);
+    const newAvgRating = avgResponse.rows[0].average_rating;
+
+    const SQL_UPDATE = `
+    UPDATE products
+    SET average_rating = $1
+    WHERE id = $2;
+  `;
+    await client.query(SQL_UPDATE, [newAvgRating, product_id]);
+    await client.query("COMMIT");
+    return newReview;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  }
 };
 const updateReview = async ({ review_id, user_id, rating, details }) => {
-  const SQL_CHECK = `
-    SELECT id FROM reviews WHERE id=$1 AND user_id=$2;
-  `;
-  const checkResponse = await client.query(SQL_CHECK, [review_id, user_id]);
+  try {
+    await client.query("BEGIN");
 
-  if (!checkResponse.rows.length) {
-    const error = new Error("Review not found or unauthorized");
-    error.status = 404;
+    const SQL_CHECK = `
+      SELECT id FROM reviews WHERE id=$1 AND user_id=$2;
+    `;
+    const checkResponse = await client.query(SQL_CHECK, [review_id, user_id]);
+
+    if (!checkResponse.rows.length) {
+      const error = new Error("Review not found or unauthorized");
+      error.status = 404;
+      throw error;
+    }
+
+    const SQL_UPDATE = `
+      UPDATE reviews
+      SET rating=$1, details=$2, updated_at=now()
+      WHERE id=$3
+      RETURNING *;
+    `;
+    const response = await client.query(SQL_UPDATE, [
+      rating,
+      details,
+      review_id,
+    ]);
+
+    await client.query("COMMIT");
+    return response.rows[0];
+  } catch (error) {
+    await client.query("ROLLBACK");
     throw error;
   }
-
-  const SQL_UPDATE = `
-    UPDATE reviews
-    SET rating=$1, details=$2, updated_at=now()
-    WHERE id=$3
-    RETURNING *;
-  `;
-  const response = await client.query(SQL_UPDATE, [rating, details, review_id]);
-
-  return response.rows[0];
 };
 const deleteReview = async ({ review_id, user_id }) => {
-  const SQL_CHECK = `
-    SELECT id
-    FROM reviews
-    WHERE id=$1 AND user_id=$2;
-  `;
-  const checkResponse = await client.query(SQL_CHECK, [review_id, user_id]);
+  try {
+    await client.query("BEGIN");
 
-  if (!checkResponse.rows.length) {
-    const error = new Error("Review not found or unauthorized");
-    error.status = 404;
+    const SQL_CHECK = `
+      SELECT id
+      FROM reviews
+      WHERE id=$1 AND user_id=$2;
+    `;
+    const checkResponse = await client.query(SQL_CHECK, [review_id, user_id]);
+
+    if (!checkResponse.rows.length) {
+      const error = new Error("Review not found or unauthorized");
+      error.status = 404;
+      throw error;
+    }
+
+    const SQL_DELETE = `
+      DELETE FROM reviews
+      WHERE id=$1
+      RETURNING *;
+    `;
+    const response = await client.query(SQL_DELETE, [review_id]);
+
+    await client.query("COMMIT");
+    return response.rows[0];
+  } catch (error) {
+    await client.query("ROLLBACK");
     throw error;
   }
-
-  const SQL_DELETE = `
-    DELETE FROM reviews
-    WHERE id=$1
-    RETURNING *;
-  `;
-  const response = await client.query(SQL_DELETE, [review_id]);
-
-  return response.rows[0];
 };
 
 // COMMENTS
@@ -274,6 +317,7 @@ const createTables = async () => {
       id UUID PRIMARY KEY NOT NULL,
       name VARCHAR(50) NOT NULL,
       details VARCHAR(255),
+      average_rating FLOAT,
       created_at TIMESTAMP DEFAULT now() NOT NULL,
       updated_at TIMESTAMP DEFAULT now()
     );
@@ -386,8 +430,6 @@ module.exports = {
   fetchUsers,
   createProduct,
   fetchProducts,
-  seedUsers,
-  seedProducts,
   authenticate,
   findUserByToken,
   createReview,
