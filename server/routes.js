@@ -173,8 +173,8 @@ router.delete(
         return res.status(403).json({ error: "Unauthorized" });
       }
 
-      const deletedReview = await deleteReview({ review_id, user_id });
-      res.json(deletedReview);
+      await deleteReview({ review_id, user_id });
+      res.status(204).send();
     } catch (error) {
       next(error);
     }
@@ -233,8 +233,8 @@ router.delete("/comments/:comment_id", isLoggedIn, async (req, res, next) => {
     const { comment_id } = req.params;
     const user_id = req.user.id;
 
-    const deletedComment = await deleteComment({ comment_id, user_id });
-    res.json(deletedComment);
+    await deleteComment({ comment_id, user_id });
+    res.status(204).send();
   } catch (error) {
     next(error);
   }

@@ -84,7 +84,8 @@ const createUser = async ({
 const fetchProducts = async () => {
   const SQL = `
     SELECT *
-    FROM products;
+    FROM products
+    ORDER BY created_at;
 `;
   const response = await client.query(SQL);
   return response.rows;
@@ -119,6 +120,7 @@ const fetchReviewsByUser = async ({ user_id }) => {
   return response.rows;
 };
 const createReview = async ({ user_id, product_id, rating, details }) => {
+  let response;
   try {
     await client.query("BEGIN");
     const SQL = `
